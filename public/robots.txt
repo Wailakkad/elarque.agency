@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# TODO: Replace with your production SITE_URL before deployment
+Sitemap: https://elarque.studio/sitemap.xml

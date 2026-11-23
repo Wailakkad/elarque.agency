@@ -1,0 +1,8 @@
+{
+  "name": "ELARQUE",
+  "description": "AI creative studio for skincare and beauty brands: art-directed ads, Reels, social designs and landing pages. Request a free 3-concept sample.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
