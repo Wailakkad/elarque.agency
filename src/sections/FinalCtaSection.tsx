@@ -33,6 +33,13 @@ const INITIAL_VALUES: FormValues = {
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+const FAST_RETRY_MIN_MS = 1500;
+
+const FAST_RETRY_MESSAGE: Record<Locale, string> = {
+  en: 'Please check your details and try again.',
+  fr: 'Vérifiez vos informations et réessayez.',
+};
+
 export const FinalCtaSection: React.FC<FinalCtaSectionProps> = ({
   t,
   locale,
@@ -40,6 +47,7 @@ export const FinalCtaSection: React.FC<FinalCtaSectionProps> = ({
   const [values, setValues] = useState<FormValues>(INITIAL_VALUES);
   const [errors, setErrors] = useState<FormErrors>({});
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [errorNotice, setErrorNotice] = useState<string | null>(null);
   const pageLoadedAtRef = useRef<number>(Date.now());
 
   const validate = (next: FormValues): FormErrors => {
@@ -85,14 +93,14 @@ export const FinalCtaSection: React.FC<FinalCtaSectionProps> = ({
       setStatus('success');
       setValues(INITIAL_VALUES);
       setErrors({});
+      setErrorNotice(null);
       return;
     }
 
-    // Submitted less than 3s after page load: treat as spam, do not send
-    if (Date.now() - pageLoadedAtRef.current < 3000) {
-      setStatus('success');
-      setValues(INITIAL_VALUES);
-      setErrors({});
+    // Submitted less than 1.5s after page load: do not send, ask to retry
+    if (Date.now() - pageLoadedAtRef.current < FAST_RETRY_MIN_MS) {
+      setErrorNotice(FAST_RETRY_MESSAGE[locale]);
+      setStatus('error');
       return;
     }
 
@@ -103,10 +111,13 @@ export const FinalCtaSection: React.FC<FinalCtaSectionProps> = ({
     }
 
     setStatus('submitting');
+    setErrorNotice(null);
 
     try {
       if (!SHEETS_ENDPOINT) {
-        throw new Error('Sheets endpoint not configured');
+        console.error('Missing VITE_SHEETS_ENDPOINT');
+        setStatus('error');
+        return;
       }
 
       // application/x-www-form-urlencoded — no Content-Type header (avoids CORS preflight)
@@ -127,11 +138,28 @@ export const FinalCtaSection: React.FC<FinalCtaSectionProps> = ({
       });
 
       if (!response.ok) {
+        if (import.meta.env.DEV) {
+          console.error('Lead form request failed', { status: response.status });
+        }
         throw new Error(`Submission failed (${response.status})`);
       }
 
-      const result: unknown = await response.json();
-      const payload = result as { ok?: boolean; error?: string };
+      let payload: { ok?: boolean; error?: string } | null = null;
+      try {
+        payload = JSON.parse(await response.text()) as {
+          ok?: boolean;
+          error?: string;
+        };
+      } catch (parseError) {
+        if (import.meta.env.DEV) {
+          console.error('Lead form response is not valid JSON', {
+            status: response.status,
+            parseError,
+          });
+        }
+        throw new Error('Invalid response format');
+      }
+
       if (!payload || payload.ok !== true) {
         throw new Error(payload?.error || 'Submission rejected');
       }
@@ -139,6 +167,7 @@ export const FinalCtaSection: React.FC<FinalCtaSectionProps> = ({
       setStatus('success');
       setValues(INITIAL_VALUES);
       setErrors({});
+      setErrorNotice(null);
     } catch {
       setStatus('error');
     }
@@ -355,7 +384,7 @@ export const FinalCtaSection: React.FC<FinalCtaSectionProps> = ({
                   role="alert"
                   className="p-4 rounded-[2px] bg-alabaster text-umber border-t-2 border-terracotta text-[14px] space-y-2"
                 >
-                  <p>{t.errors.submitFailed}</p>
+                  <p>{errorNotice ?? t.errors.submitFailed}</p>
                   <p>
                     <a
                       href={getWhatsAppUrl(fallbackWhatsAppMessage)}

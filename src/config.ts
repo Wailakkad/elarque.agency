@@ -1,7 +1,7 @@
 // Google Apps Script web app that appends form rows to a Google Sheet.
 // Set VITE_SHEETS_ENDPOINT in .env (see .env.example).
 export const SHEETS_ENDPOINT: string =
-  import.meta.env.VITE_SHEETS_ENDPOINT ?? '';
+  import.meta.env.VITE_SHEETS_ENDPOINT?.trim() ?? '';
 
 export const SITE_CONFIG = {
   // TODO: Replace with your WhatsApp number in international format without '+' or spaces (e.g. '33612345678')

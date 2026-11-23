@@ -46,6 +46,7 @@ The final CTA form (“Request my free 3-concept sample”) posts submissions to
 - Deployed: set the same variable in your host’s environment (Vercel/Netlify env vars), then rebuild.
 - `src/config.ts` reads it as `SHEETS_ENDPOINT` via `import.meta.env.VITE_SHEETS_ENDPOINT`.
 - `.env` is gitignored; never commit the live endpoint if your repo is public (the URL alone only accepts writes if the script is deployed as anyone).
+- Vite variables are baked in at build time. After adding or changing `VITE_SHEETS_ENDPOINT` on Vercel, redeploy.
 
 ### After editing the Apps Script
 
