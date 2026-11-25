@@ -3,7 +3,7 @@ import { Section } from '../components/Section';
 import { Container } from '../components/Container';
 import { Button } from '../components/Button';
 import { Monogram } from '../components/Monogram';
-import { SHEETS_ENDPOINT, getWhatsAppUrl } from '../config';
+import { getWhatsAppUrl } from '../config';
 import { Dictionary, Locale } from '../i18n';
 
 interface FinalCtaSectionProps {
@@ -48,6 +48,7 @@ export const FinalCtaSection: React.FC<FinalCtaSectionProps> = ({
   const [errors, setErrors] = useState<FormErrors>({});
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [errorNotice, setErrorNotice] = useState<string | null>(null);
+  const [whatsappUrl, setWhatsappUrl] = useState('');
   const pageLoadedAtRef = useRef<number>(Date.now());
 
   const validate = (next: FormValues): FormErrors => {
@@ -62,9 +63,6 @@ export const FinalCtaSection: React.FC<FinalCtaSectionProps> = ({
     }
     if (!next.brandLink.trim()) {
       nextErrors.brandLink = t.errors.brandRequired;
-    }
-    if (!next.productDetails.trim()) {
-      nextErrors.productDetails = t.errors.productRequired;
     }
     return nextErrors;
   };
@@ -81,10 +79,29 @@ export const FinalCtaSection: React.FC<FinalCtaSectionProps> = ({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const buildWhatsAppMessage = (): string => {
+    const lines = [
+      "Hi ELARQUE, I'd like a free 3-concept sample.",
+      `Name: ${values.name.trim()}`,
+      `Email: ${values.email.trim()}`,
+      `Brand: ${values.brandLink.trim()}`,
+    ];
+    const product = values.productDetails.trim();
+    lines.push(
+      product
+        ? `Product: ${product}`
+        : 'Product: no link — image to follow on WhatsApp'
+    );
+    const message = values.message.trim();
+    if (message) lines.push(`Message: ${message}`);
+    lines.push(`Page: ${window.location.href}`);
+    return lines.join('\n');
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (status === 'submitting') {
+    if (status === 'success') {
       return;
     }
 
@@ -110,72 +127,18 @@ export const FinalCtaSection: React.FC<FinalCtaSectionProps> = ({
       return;
     }
 
-    setStatus('submitting');
+    // Open WhatsApp with the pre-filled lead message (no server involved)
+    const url = getWhatsAppUrl(buildWhatsAppMessage());
+    setWhatsappUrl(url);
+    window.open(url, '_blank', 'noopener,noreferrer');
+
+    setStatus('success');
+    setValues(INITIAL_VALUES);
+    setErrors({});
     setErrorNotice(null);
-
-    try {
-      if (!SHEETS_ENDPOINT) {
-        console.error('Missing VITE_SHEETS_ENDPOINT');
-        setStatus('error');
-        return;
-      }
-
-      // application/x-www-form-urlencoded — no Content-Type header (avoids CORS preflight)
-      const body = new URLSearchParams({
-        name: values.name.trim(),
-        email: values.email.trim(),
-        brand: values.brandLink.trim(),
-        product: values.productDetails.trim(),
-        message: values.message.trim(),
-        lang: locale,
-        page: window.location.href,
-        company_website: values.honeypot.trim(),
-      });
-
-      const response = await fetch(SHEETS_ENDPOINT, {
-        method: 'POST',
-        body,
-      });
-
-      if (!response.ok) {
-        if (import.meta.env.DEV) {
-          console.error('Lead form request failed', { status: response.status });
-        }
-        throw new Error(`Submission failed (${response.status})`);
-      }
-
-      let payload: { ok?: boolean; error?: string } | null = null;
-      try {
-        payload = JSON.parse(await response.text()) as {
-          ok?: boolean;
-          error?: string;
-        };
-      } catch (parseError) {
-        if (import.meta.env.DEV) {
-          console.error('Lead form response is not valid JSON', {
-            status: response.status,
-            parseError,
-          });
-        }
-        throw new Error('Invalid response format');
-      }
-
-      if (!payload || payload.ok !== true) {
-        throw new Error(payload?.error || 'Submission rejected');
-      }
-
-      setStatus('success');
-      setValues(INITIAL_VALUES);
-      setErrors({});
-      setErrorNotice(null);
-    } catch {
-      setStatus('error');
-    }
   };
 
-  const fallbackWhatsAppMessage = values.name
-    ? `Hi ELARQUE, I'd like a free 3-concept sample.\nName: ${values.name}\nBrand: ${values.brandLink}\nProduct: ${values.productDetails}`
-    : t.whatsappDefaultMessage;
+  const fallbackWhatsAppHref = whatsappUrl || getWhatsAppUrl(t.whatsappDefaultMessage);
 
   return (
     <Section
@@ -215,6 +178,18 @@ export const FinalCtaSection: React.FC<FinalCtaSectionProps> = ({
               <p className="font-display text-2xl sm:text-3xl text-umber mt-3">
                 {t.successMessage}
               </p>
+              {whatsappUrl && (
+                <p className="mt-4 text-[15px] text-umber">
+                  <a
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-terracotta-hover font-medium underline underline-offset-4"
+                  >
+                    {t.whatsappLinkLabel}
+                  </a>
+                </p>
+              )}
             </div>
           ) : (
             <form onSubmit={handleSubmit} noValidate className="space-y-5">
@@ -337,25 +312,15 @@ export const FinalCtaSection: React.FC<FinalCtaSectionProps> = ({
                   id="sample-product"
                   name="productDetails"
                   type="text"
-                  required
                   placeholder={t.fields.productDetailsPlaceholder}
                   value={values.productDetails}
                   onChange={(e) => handleChange('productDetails', e.target.value)}
-                  aria-invalid={Boolean(errors.productDetails)}
-                  aria-describedby={
-                    errors.productDetails ? 'sample-product-error' : undefined
-                  }
+                  aria-describedby="sample-product-help"
                   className="w-full px-4 py-3 rounded-[2px] bg-alabaster text-umber placeholder:text-umber/45 border border-travertine focus:outline-2 focus:outline-terracotta"
                 />
-                {errors.productDetails && (
-                  <p
-                    id="sample-product-error"
-                    role="alert"
-                    className="mt-1.5 text-[13px] text-petal"
-                  >
-                    {errors.productDetails}
-                  </p>
-                )}
+                <p id="sample-product-help" className="mt-1.5 text-[13px] text-alabaster/60">
+                  {t.fields.productHelp}
+                </p>
               </div>
 
               <div>
@@ -387,7 +352,7 @@ export const FinalCtaSection: React.FC<FinalCtaSectionProps> = ({
                   <p>{errorNotice ?? t.errors.submitFailed}</p>
                   <p>
                     <a
-                      href={getWhatsAppUrl(fallbackWhatsAppMessage)}
+                      href={fallbackWhatsAppHref}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-terracotta-hover font-medium underline underline-offset-4"
@@ -411,18 +376,6 @@ export const FinalCtaSection: React.FC<FinalCtaSectionProps> = ({
                 <p className="micro-label text-alabaster/70">{t.consent}</p>
 
                 <p className="micro-label text-alabaster/70">{t.reassurance}</p>
-
-                <p className="text-[15px] text-alabaster/85 pt-2">
-                  {t.whatsappPrompt}{' '}
-                  <a
-                    href={getWhatsAppUrl(t.whatsappDefaultMessage)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-alabaster underline underline-offset-4 decoration-brass hover:text-sand transition-colors"
-                  >
-                    {t.whatsappLinkLabel}
-                  </a>
-                </p>
               </div>
             </form>
           )}

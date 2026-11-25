@@ -22,44 +22,20 @@ npm run build
 
 All contact placeholders are centralized in `src/config.ts`:
 
-- `WHATSAPP_NUMBER`: International phone digits only (no `+` or spaces, e.g. `'33612345678'`).
+- `WHATSAPP_NUMBER`: International phone digits only (no `+` or spaces, e.g. `'212652700293'`).
 - `CONTACT_EMAIL`: Studio contact email (e.g. `'hello@elarque.studio'`).
 - `SITE_URL`: Live canonical domain (e.g. `'https://elarque.studio'`). Also update `<link rel="canonical">`, `og:url` in `index.html`, `public/sitemap.xml`, and `public/robots.txt` to match.
 - `INSTAGRAM_URL`: Studio Instagram profile URL.
 
-The form endpoint is **not** in `config.ts` — see [Form to Google Sheets](#form-to-google-sheets).
+The lead form has **no backend** — see [Contact via WhatsApp](#contact-via-whatsapp).
 
-## Form to Google Sheets
+## Contact via WhatsApp
 
-The final CTA form (“Request my free 3-concept sample”) posts submissions to a **Google Apps Script web app**, which appends a row to a Google Sheet.
+The final CTA form (“Request my free 3-concept sample”) does not post to a server or spreadsheet. On submit it opens WhatsApp with a pre-filled lead message to the studio number.
 
-### How it works
-
-1. The browser sends `POST` with `application/x-www-form-urlencoded` body (`URLSearchParams`) to the Apps Script `/exec` URL.
-2. Fields: `name`, `email`, `brand`, `product`, `message`, `lang`, `page`, `company_website` (honeypot).
-3. The script replies with JSON: `{"ok": true}` on success or `{"ok": false, "error": "..."}` on failure.
-4. No custom `Content-Type` header is set — Apps Script does not support the CORS preflight that JSON would trigger.
-
-### Where to change the URL
-
-- Local: set `VITE_SHEETS_ENDPOINT` in `.env` (copy the pattern from `.env.example`).
-- Deployed: set the same variable in your host’s environment (Vercel/Netlify env vars), then rebuild.
-- `src/config.ts` reads it as `SHEETS_ENDPOINT` via `import.meta.env.VITE_SHEETS_ENDPOINT`.
-- `.env` is gitignored; never commit the live endpoint if your repo is public (the URL alone only accepts writes if the script is deployed as anyone).
-- Vite variables are baked in at build time. After adding or changing `VITE_SHEETS_ENDPOINT` on Vercel, redeploy.
-
-### After editing the Apps Script
-
-1. Open the Apps Script project.
-2. **Deploy → Manage deployments → Edit (pencil) → Version: New version → Deploy.**
-3. Copy the new `/exec` URL into `.env` if it changed.
-4. Redeploy the site so the build picks up the new value.
-
-### Keep the sheet private
-
-- Share the Google Sheet only with editors who need access (not “anyone with the link”).
-- The Apps Script runs under the deployer’s account; limit who can edit the script.
-- Do not expose service-account keys or sheet IDs in client code.
+- The number lives in `src/config.ts` → `SITE_CONFIG.WHATSAPP_NUMBER` (international digits only, no `+`).
+- If the visitor has no product page link, the pre-filled message says an image will follow on WhatsApp.
+- The number is compiled into the bundle: changing it requires a rebuild/redeploy.
 
 ## 3. Replacing placeholder portfolio images
 

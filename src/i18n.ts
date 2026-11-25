@@ -58,6 +58,7 @@ export interface Dictionary {
       brandLinkPlaceholder: string;
       productDetails: string;
       productDetailsPlaceholder: string;
+      productHelp: string;
       message: string;
       messageOptionalTag: string;
       messagePlaceholder: string;
@@ -67,14 +68,12 @@ export interface Dictionary {
       emailRequired: string;
       emailInvalid: string;
       brandRequired: string;
-      productRequired: string;
       submitFailed: string;
     };
     submitButton: string;
     submittingButton: string;
     reassurance: string;
     consent: string;
-    whatsappPrompt: string;
     whatsappLinkLabel: string;
     whatsappDefaultMessage: string;
     successMessage: string;
@@ -160,8 +159,11 @@ export const DICTIONARY: Record<Locale, Dictionary> = {
         emailPlaceholder: 'camille@yourbrand.com',
         brandLink: 'Brand or Instagram link',
         brandLinkPlaceholder: 'https://instagram.com/yourbrand',
-        productDetails: 'Product link or short description',
-        productDetailsPlaceholder: 'Barrier repair serum in 30ml amber glass bottle',
+        productDetails: 'Product page link (optional)',
+        productDetailsPlaceholder:
+          'Paste a product page link — or leave empty and send your product image on WhatsApp',
+        productHelp:
+          'No link? Just send your product image on WhatsApp after submitting.',
         message: 'Message',
         messageOptionalTag: '(optional)',
         messagePlaceholder: 'Share campaign goals, mood references, or target launch date.',
@@ -171,7 +173,6 @@ export const DICTIONARY: Record<Locale, Dictionary> = {
         emailRequired: 'Please enter your email address.',
         emailInvalid: 'Please enter a valid email address.',
         brandRequired: 'Please share your brand name or Instagram link.',
-        productRequired: 'Please include a product link or short description.',
         submitFailed:
           'Something went wrong. Please try again or message us on WhatsApp.',
       },
@@ -179,7 +180,6 @@ export const DICTIONARY: Record<Locale, Dictionary> = {
       submittingButton: 'Sending...',
       reassurance: 'No payment details. No spam. Concepts are yours to keep.',
       consent: 'We only use your details to send your sample.',
-      whatsappPrompt: 'Prefer to talk first?',
       whatsappLinkLabel: 'Message us on WhatsApp.',
       whatsappDefaultMessage:
         "Hi ELARQUE, I'd like to ask about your creative services.",
@@ -312,8 +312,11 @@ export const DICTIONARY: Record<Locale, Dictionary> = {
         emailPlaceholder: 'camille@votremarque.com',
         brandLink: 'Marque ou lien Instagram',
         brandLinkPlaceholder: 'https://instagram.com/votremarque',
-        productDetails: 'Lien du produit ou courte description',
-        productDetailsPlaceholder: 'Sérum barrière cutanée en flacon ambré 30 ml',
+        productDetails: 'Lien de la page produit (optionnel)',
+        productDetailsPlaceholder:
+          'Collez un lien de page produit — ou laissez vide et envoyez votre image produit sur WhatsApp',
+        productHelp:
+          "Pas de lien ? Envoyez simplement votre image produit sur WhatsApp après l'envoi.",
         message: 'Message',
         messageOptionalTag: '(optionnel)',
         messagePlaceholder: 'Précisez vos objectifs, références visuelles ou date de lancement.',
@@ -323,7 +326,6 @@ export const DICTIONARY: Record<Locale, Dictionary> = {
         emailRequired: 'Veuillez indiquer votre adresse e-mail.',
         emailInvalid: 'Veuillez saisir une adresse e-mail valide.',
         brandRequired: 'Veuillez indiquer votre marque ou lien Instagram.',
-        productRequired: 'Veuillez ajouter un lien produit ou une description.',
         submitFailed:
           'Une erreur est survenue. Réessayez ou écrivez-nous sur WhatsApp.',
       },
@@ -331,7 +333,6 @@ export const DICTIONARY: Record<Locale, Dictionary> = {
       submittingButton: 'Envoi en cours...',
       reassurance: 'Aucune carte bancaire. Aucun spam. Les concepts vous appartiennent.',
       consent: 'Nous utilisons vos informations uniquement pour vous envoyer votre échantillon.',
-      whatsappPrompt: 'Vous préférez échanger directement ?',
       whatsappLinkLabel: 'Écrivez-nous sur WhatsApp.',
       whatsappDefaultMessage:
         'Bonjour ELARQUE, je souhaite poser une question sur vos services créatifs.',
